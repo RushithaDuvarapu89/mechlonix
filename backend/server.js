@@ -31,6 +31,9 @@ mongoose.connect(process.env.MONGO_URI)
     app.get("/", (req, res) => {
         res.send("Backend is running 🚀");
       });
+      app.get("/api/users", (req, res) => {
+        res.json({ message: "Users API working ✅" });
+      });
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
     });
