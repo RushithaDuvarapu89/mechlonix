@@ -1,73 +1,56 @@
 const express = require("express");
 const router = express.Router();
-const User = require("../models/User.js");
+const User = require("../models/User");
 const jwt = require("jsonwebtoken");
 
-// ==========================
-// REGISTER
-// ==========================
-router.post("/register", async (req, res) => {
-  try {
-    console.log("Register API hit");
+// ✅ IMPORT MIDDLEWARE (TOP ONLY ONCE)
+const { protect } = require("../middleware/authMiddleware");
 
-    const { name, email, password, role } = req.body;
-
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || "customer",
-    });
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET
-    );
-
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,   // ✅ important
-      token,
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
-});
 
 // ==========================
 // LOGIN
 // ==========================
 router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
+    try {
+        const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
+        // 1. Check user exists
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(400).json({ message: "User not found" });
+        }
 
-    if (!user || !(await user.comparePassword(password))) {
-      return res.status(401).json({ message: "Invalid credentials" });
+        // 2. Check password
+        const isMatch = await user.comparePassword(password);
+        if (!isMatch) {
+            return res.status(400).json({ message: "Invalid credentials" });
+        }
+
+        // 3. Generate token
+        const token = jwt.sign(
+            { id: user._id, role: user.role },
+            process.env.JWT_SECRET,
+            { expiresIn: "7d" }
+        );
+
+        res.json({
+            message: "Login successful ✅",
+            token,
+            user
+        });
+
+    } catch (error) {
+        res.status(500).json({ message: error.message });
     }
-
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET
-    );
-
-    res.json({
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,   // ✅ important
-      token,
-    });
-
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Server error" });
-  }
 });
+
+
+// ==========================
+// GET PROFILE (PROTECTED)
+// ==========================
+router.get("/profile", protect, (req, res) => {
+    res.json(req.user);
+});
+
 
 module.exports = router;
