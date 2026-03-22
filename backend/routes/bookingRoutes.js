@@ -6,7 +6,8 @@ const {
   getBookings,
   updateStatus,
   deleteBooking,
-  assignMechanic
+  assignMechanic,
+  getBookingStats   // ✅ ADD THIS LINE
 } = require("../controllers/bookingController");
 
 const { protect, authorize } = require("../middleware/authMiddleware");

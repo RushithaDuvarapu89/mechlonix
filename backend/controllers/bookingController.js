@@ -163,3 +163,23 @@ exports.getBookingStats = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+// ==============================
+// GET BOOKING STATS (ADMIN)
+// ==============================
+exports.getBookingStats = async (req, res) => {
+  try {
+    const total = await Booking.countDocuments();
+    const pending = await Booking.countDocuments({ status: "pending" });
+    const confirmed = await Booking.countDocuments({ status: "confirmed" });
+    const completed = await Booking.countDocuments({ status: "completed" });
+
+    res.json({
+      total,
+      pending,
+      confirmed,
+      completed,
+    });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
