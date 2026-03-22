@@ -2,16 +2,16 @@ const express = require("express");
 const router = express.Router();
 
 const {
-  addFeedback,
-  getAllFeedback
+  createFeedback,
+  getFeedbacks,
 } = require("../controllers/feedbackController");
 
 const { protect, authorize } = require("../middleware/authMiddleware");
 
-// Customer gives feedback
-router.post("/:bookingId", protect, authorize("customer"), addFeedback);
+// Customer → submit
+router.post("/", protect, createFeedback);
 
-// Admin views all feedback
-router.get("/", protect, authorize("admin"), getAllFeedback);
+// Admin → view all
+router.get("/", protect, authorize("admin"), getFeedbacks);
 
 module.exports = router;

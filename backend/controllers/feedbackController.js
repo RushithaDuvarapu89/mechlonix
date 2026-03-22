@@ -1,42 +1,26 @@
 const Feedback = require("../models/Feedback");
-const Booking = require("../models/Booking");
 
-// Add feedback
-exports.addFeedback = async (req, res) => {
-  const booking = await Booking.findById(req.params.bookingId);
-
-  // Check booking exists
-  if (!booking) {
-    return res.status(404).json({ message: "Booking not found" });
-  }
-
-  // Only completed bookings
-  if (booking.status !== "completed") {
-    return res.status(400).json({
-      message: "Cannot give feedback before completion"
+// CREATE FEEDBACK (Customer)
+exports.createFeedback = async (req, res) => {
+  try {
+    const feedback = await Feedback.create({
+      user: req.user._id,
+      message: req.body.message,
+      rating: req.body.rating,
     });
+
+    res.json(feedback);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
-
-  // Only booking owner
-  if (booking.customer.toString() !== req.user.id) {
-    return res.status(403).json({ message: "Not authorized" });
-  }
-
-  const feedback = await Feedback.create({
-    booking: booking._id,
-    customer: req.user.id,
-    rating: req.body.rating,
-    comment: req.body.comment
-  });
-
-  res.status(201).json(feedback);
 };
 
-// Get all feedback (admin)
-exports.getAllFeedback = async (req, res) => {
-  const feedbacks = await Feedback.find()
-    .populate("customer", "name")
-    .populate("booking");
-
-  res.json(feedbacks);
+// GET ALL FEEDBACK (Admin)
+exports.getFeedbacks = async (req, res) => {
+  try {
+    const feedbacks = await Feedback.find().populate("user", "name email");
+    res.json(feedbacks);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
 };
