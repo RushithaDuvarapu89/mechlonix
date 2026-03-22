@@ -1,35 +1,38 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User");
+const { protect, authorize } = require("../middleware/authMiddleware");
 
-// SIGNUP API
-router.post("/signup", async (req, res) => {
+// ==========================
+// GET ALL USERS (ADMIN ONLY)
+// ==========================
+router.get("/", protect, authorize("admin"), async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const users = await User.find().select("-password");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
 
-    // check if user exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: "User already exists" });
+// ==========================
+// UPDATE USER ROLE (ADMIN)
+// ==========================
+router.patch("/:id/role", protect, authorize("admin"), async (req, res) => {
+  try {
+    const { role } = req.body;
+
+    const user = await User.findById(req.params.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    // create user (NO hashing here)
-    const user = new User({
-      name,
-      email,
-      password,
-      role
-    });
+    user.role = role;
+    await user.save();
 
-    await user.save(); // 🔥 hashing happens automatically here
-
-    res.status(201).json({
-      message: "User registered successfully 🎉",
-      user: {
-        name: user.name,
-        email: user.email,
-        role: user.role
-      }
+    res.json({
+      message: "Role updated successfully 🎉",
+      user,
     });
 
   } catch (error) {
